@@ -1,3 +1,14 @@
+var steem = require('steem')
+var uuidv4 = require('uuid/v4')
+steem.api.setOptions({ url: 'https://api.steemit.com', useAppbaseApi: true});
+
+if (!process.env.PRIVKEY)
+  throw 'Need an PRIVKEY env variable'
+var keys = {
+  priv: process.env.PRIVKEY
+}
+var tokens = []
+
 /*
   Description: Allows calling client to change their current nickname
 */
@@ -107,11 +118,38 @@ exports.nickCheck = (core, server, socket, payload) => {
       return false;
     }
 
-    let newNick = input[1].replace(/@/g, '');
+    let username = input[1].replace('@', '').trim();
+    if (input[2] !== undefined) {
+      let uuid = input[2].trim();
+      for (let i = tokens.length-1; i >= 0; i--) {
+        if (tokens[i].uuid == uuid && tokens[i].username == username) {
+          console.log("logged in "+username)
+          this.run(core, server, socket, {
+            cmd: 'changenick',
+            nick: tokens[i].username
+          });
+        }
+      }
+      return false
+    }
 
-    this.run(core, server, socket, {
-      cmd: 'changenick',
-      nick: newNick
+    
+    steem.api.getAccounts([username], function(err, results) {
+      if (results.length == 1) {
+        var steemUser = results[0]
+        var uuid = uuidv4()
+        tokens.push({username: username, uuid: uuid})
+        var encodedMessage = steem.memo.encode(keys.priv, steemUser.posting.key_auths[0][0], '#'+uuid)
+        server.reply({
+          cmd: 'challenge',
+          text: encodedMessage
+        }, socket);
+        console.log('challenged '+username)
+        return false;
+      } else {
+        console.log('error')
+        return false;
+      }
     });
 
     return false;

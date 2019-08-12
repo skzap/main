@@ -12,7 +12,7 @@
     "npm": ">= 5.7.1"
   },
   "scripts": {
-    "start": "http-server ../client -o -p 3000"
+    "start": "http-server ../client -p 3000"
   },
   "author": "Marzavec",
   "license": "WTFPL",

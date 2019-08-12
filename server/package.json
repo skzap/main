@@ -25,6 +25,8 @@
     "fs-extra": "^7.0.1",
     "prompt": "^1.0.0",
     "readdir-recursive": "0.0.4",
+    "steem": "^0.7.7",
+    "uuidv4": "^4.0.0",
     "ws": "^6.1.4"
   }
 }

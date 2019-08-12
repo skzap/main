@@ -229,13 +229,14 @@ function join(channel) {
 			if (location.hash) {
 				myNick = location.hash.substr(1);
 			} else {
-				myNick = prompt('Nickname:', myNick);
+				myNick = prompt('Nickname:', myNick).replace('@','').trim()
 			}
 		}
 
 		if (myNick) {
 			localStorageSet('my-nick', myNick);
 			send({ cmd: 'join', channel: channel, nick: myNick });
+			send({ cmd: 'chat', text: '/nick '+myNick });
 		}
 
 		wasConnected = true;
@@ -274,6 +275,30 @@ var COMMANDS = {
 
 	warn: function (args) {
 		args.nick = '!';
+		pushMessage(args);
+	},
+
+	challenge: function (args) {
+		console.log(args)
+		if (steem_keychain) {
+			steem_keychain.requestVerifyKey(myNick, args.text, "Posting", function(verif) {
+				if (verif.success == true) {
+					var token = verif.result.replace('#','')
+					send({ cmd: 'chat', text: '/nick '+myNick+' '+token});
+				} else {
+					args.nick = '!!';
+					args.text = 'Auth Error'
+					pushMessage(args);
+				}
+			});
+		} else {
+			args.nick = '!!';
+			args.text = 'You need to download the STEEM Keychain extension'
+			pushMessage(args);
+		}
+
+		args.nick = '!!';
+		args.text = args.text.replace('#','CHALLENGE: ')
 		pushMessage(args);
 	},
 
@@ -329,6 +354,8 @@ function pushMessage(args) {
 	if (verifyNickname(myNick) && args.nick == myNick) {
 		messageEl.classList.add('me');
 	} else if (args.nick == '!') {
+		messageEl.classList.add('warn');
+	} else if (args.nick == '!!') {
 		messageEl.classList.add('warn');
 	} else if (args.nick == '*') {
 		messageEl.classList.add('info');

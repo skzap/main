@@ -78,6 +78,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  data.nick = 'Anon'+Math.round(Math.random()*10000)
   let userInfo = this.parseNickname(core, data);
   if (typeof userInfo === 'string') {
     return server.reply({
